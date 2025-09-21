@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LunarCrush Analytics Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            line-height: 1.6;
+            font-size: 1.25rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #1da1f2;
+            font-size: 3.125rem;
+            margin-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1da1f2;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 1.125rem;
+        }
+        
+        .section {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section h2 {
+            color: #1da1f2;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .posts-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .post-item {
+            background: #000;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .post-meta {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .post-text {
+            color: #fff;
+            margin-bottom: 12px;
+            font-size: 1.375rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        
+        .post-sentiment {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+        
+        .sentiment-bullish {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .sentiment-bearish {
+            background: #ff0000;
+            color: #fff;
+        }
+        
+        .sentiment-neutral {
+            background: #666;
+            color: #fff;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        
+        .refresh-btn {
+            background: #1da1f2;
+            color: #fff;
+            border: none;
+            padding: 12.5px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-btn:hover {
+            background: #0d8bd9;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Compact overrides */
+        .container { padding: 2px !important; }
+        .header { margin-bottom: 6px !important; padding-bottom: 4px !important; border-bottom: none !important; }
+        .header h1 { font-size: 2.25rem !important; margin-bottom: 2px !important; }
+        .refresh-btn { padding: 5px 10px !important; font-size: 1.125rem !important; margin-bottom: 6px !important; }
+
+        .section { padding: 2px !important; margin-bottom: 6px !important; }
+        .section h2 { font-size: 1.25rem !important; margin-bottom: 4px !important; padding-bottom: 2px !important; }
+
+        .posts-list { overflow: visible !important; }
+        .post-item {
+          background: rgba(255, 255, 255, 0.02) !important;
+          border: none !important;
+          border-bottom: 1px solid #333 !important;
+          padding: 6px 2px !important;
+          margin: 0 !important;
+          border-radius: 0 !important;
+        }
+        .post-item:last-child { border-bottom: none !important; }
+
+        .post-meta { display: none !important; }
+        .post-sentiment { display: none !important; }
+
+        .post-text { margin: 0 !important; font-size: 1.375rem !important; line-height: 1.5 !important; color: #fff !important; }
+
+        /* Tighten stats */
+        .stats-grid { gap: 10px !important; margin-bottom: 16px !important; }
+        .stat-card { padding: 12px !important; }
+        .stat-number { font-size: 1.75rem !important; }
+        .stat-label { font-size: 1rem !important; }
+
+        /* Ticker styles - Condensed */
+        #tickerData {
+          max-height: 200px;
+          overflow-y: auto;
+        }
+        .ticker-item {
+          display: flex;
+          align-items: center;
+          padding: 6px 0;
+          border-bottom: 1px solid #222;
+        }
+        .ticker-item:last-child { border-bottom: none; }
+        .ticker-rank {
+          font-weight: bold;
+          color: #1da1f2;
+          min-width: 20px;
+          font-size: 1.0625rem;
+        }
+        .ticker-symbol {
+          font-weight: bold;
+          color: #00ff00;
+          margin-left: 8px;
+          min-width: 70px;
+          font-size: 1.1875rem;
+        }
+        .ticker-mentions {
+          color: #666;
+          margin-left: 5px;
+          flex-grow: 1;
+          font-size: 1rem;
+        }
+        .ticker-links {
+          display: flex;
+          gap: 6px;
+          margin-left: 8px;
+        }
+        .ticker-link {
+          padding: 1px 4px;
+          border-radius: 3px;
+          text-decoration: none;
+          font-size: 0.875rem;
+          font-weight: bold;
+        }
+        .dex-link {
+          background: #ff6b35;
+          color: white;
+        }
+        .twitter-link {
+          background: #1da1f2;
+          color: white;
+        }
+        .website-link {
+          background: #666;
+          color: white;
+        }
+        .ticker-link:hover {
+          opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌙 LunarCrush Analytics</h1>
+            <p>Real-time crypto sentiment analysis from Twitter/X</p>
+            <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+        </div>
+        
+        
+        <div class="section">
+            <h2>💎 Popular $Tickers</h2>
+            <div id="tickerData" class="loading">Loading popular tickers...</div>
+        </div>
+        
+        <div class="section">
+            <h2>📱 Recent Posts <span id="postCount" style="font-size: 0.7rem; color: #666; font-weight: normal;"></span></h2>
+            <div class="posts-list" id="recentPosts">
+                <div class="loading">Loading recent posts...</div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                // Load trends and tickers data
+                const [trendsResponse, tickersResponse] = await Promise.all([
+                    fetch('/api/trends?days=7&limit=500'),
+                    fetch('/api/tickers?days=7')
+                ]);
+
+                const trends = await trendsResponse.json();
+                const tickers = await tickersResponse.json();
+
+                if (trends.error) {
+                    document.getElementById('tickerData').innerHTML = `<p>Error loading trends: ${trends.error}</p>`;
+                } else {
+                    updateRecentPosts(trends.recentPosts || []);
+                }
+
+                if (tickers.error) {
+                    document.getElementById('tickerData').innerHTML = `<p>Error loading tickers: ${tickers.error}</p>`;
+                } else {
+                    updateTickerData(tickers.tickers || []);
+                }
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('tickerData').innerHTML = '<p>Error loading data. Please try again.</p>';
+            }
+        }
+        
+        function updateTickerData(tickers) {
+            const container = document.getElementById('tickerData');
+
+            if (!tickers || tickers.length === 0) {
+                container.innerHTML = '<p class="loading">No popular tickers found</p>';
+                return;
+            }
+
+            const tickersHtml = tickers.slice(0, 15).map((ticker, index) => {
+                const websiteUrl = `https://coinmarketcap.com/currencies/${ticker.symbol.toLowerCase()}/`;
+
+                return `
+                    <div class="ticker-item">
+                        <span class="ticker-rank">#${index + 1}</span>
+                        <span class="ticker-symbol">${ticker.ticker}</span>
+                        <span class="ticker-mentions">${ticker.totalMentions} mentions</span>
+                        <div class="ticker-links">
+                            <a href="${ticker.dexscreenerUrl}" target="_blank" class="ticker-link dex-link">DEX</a>
+                            <a href="${ticker.twitterUrl}" target="_blank" class="ticker-link twitter-link">Twitter</a>
+                            <a href="${websiteUrl}" target="_blank" class="ticker-link website-link">CMC</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = tickersHtml;
+        }
+        
+        let allPosts = [];
+        let currentPage = 1;
+        const postsPerPage = 10;
+
+        function updateRecentPosts(posts) {
+            const container = document.getElementById('recentPosts');
+            const postCountElement = document.getElementById('postCount');
+            allPosts = posts;
+            currentPage = 1; // Reset to first page
+
+            if (!posts || posts.length === 0) {
+                container.innerHTML = '<p class="loading">No recent posts found</p>';
+                postCountElement.textContent = '(0)';
+                return;
+            }
+
+            // Update post count
+            postCountElement.textContent = `(${posts.length})`;
+            renderPostsPage();
+        }
+
+        function renderPostsPage() {
+            const container = document.getElementById('recentPosts');
+            const totalPages = Math.ceil(allPosts.length / postsPerPage);
+            const startIndex = (currentPage - 1) * postsPerPage;
+            const endIndex = startIndex + postsPerPage;
+            const postsToShow = allPosts.slice(startIndex, endIndex);
+
+            const postsHtml = postsToShow.map(post => {
+                const sentimentClass = `sentiment-${post.sentiment}`;
+                const tickers = JSON.parse(post.tickers || '[]').join(' ');
+                const cleanText = stripRelativeTime(post.text);
+
+                return `
+                    <div class="post-item" style="cursor: pointer; transition: background 0.2s;" onclick="window.open('${post.url}', '_blank')" onmouseover="this.style.background='#111'" onmouseout="this.style.background='#000'">
+                        <div class="post-text">${cleanText} <span style="color: #666; font-size: 1rem;">🔗</span></div>
+                    </div>
+                `;
+            }).join('');
+
+            const paginationHtml = totalPages > 1 ? `
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; padding: 10px;">
+                    <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}
+                            style="background: #1da1f2; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; ${currentPage === 1 ? 'opacity: 0.5;' : ''}">←</button>
+                    <span style="color: #666; font-size: 0.9rem;">Page ${currentPage} of ${totalPages}</span>
+                    <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}
+                            style="background: #1da1f2; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; ${currentPage === totalPages ? 'opacity: 0.5;' : ''}">→</button>
+                </div>
+            ` : '';
+
+            container.innerHTML = postsHtml + paginationHtml;
+        }
+
+        function changePage(newPage) {
+            const totalPages = Math.ceil(allPosts.length / postsPerPage);
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderPostsPage();
+            }
+        }
+
+        function stripRelativeTime(text) {
+          if (!text) return text;
+
+          const token = /(?:(?:\b(?:an?|one)\b|\b\d+)\s*)(?:s|sec|secs|second|seconds|m|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days|w|wk|wks|week|weeks|mo|mos|month|months|y|yr|yrs|year|years)\b(?:\s+ago)?|\bjust now\b/i;
+          const sep = /[ \t\u00B7|,;:–—-]+/; // separators
+          const bracket = /[()[\]]?/;
+
+          // Remove lines that are just a time token
+          const timeOnlyLine = new RegExp(
+            `^\\s*(?:${bracket.source})\\s*(?:${token.source})\\s*(?:${bracket.source})\\s*$`,
+            'i'
+          );
+
+          let result = text.split(/\r?\n/).filter(l => !timeOnlyLine.test(l)).join('\n');
+
+          // Remove tokens at start/end
+          const edge = new RegExp(
+            `^(?:${sep.source})?(?:${bracket.source})\\s*(?:${token.source})\\s*(?:${bracket.source})(?:${sep.source})?|(?:${sep.source})?(?:${bracket.source})\\s*(?:${token.source})\\s*(?:${bracket.source})(?:${sep.source})?$`,
+            'i'
+          );
+          result = result.replace(edge, '');
+
+          // Remove standalone tokens anywhere
+          const anywhere = new RegExp(
+            `(?:^|${sep.source})(?:${bracket.source})\\s*(?:${token.source})\\s*(?:${bracket.source})(?=${sep.source}|$)`,
+            'ig'
+          );
+          result = result.replace(anywhere, ' ');
+
+          return result.replace(/\s{2,}/g, ' ').trim();
+        }
+        
+        
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+        
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
